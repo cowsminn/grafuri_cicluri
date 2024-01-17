@@ -61,7 +61,7 @@ struct graf {
         }
     }
 
-    bool exista_in_ciclu(int ciclu_curent[], int nod) {
+    bool exista_in_ciclu(int const ciclu_curent[], int nod) {
         for (int i = 0; i < 6; ++i) {
             if (ciclu_curent[i] == nod) {
                 return true;
@@ -70,7 +70,7 @@ struct graf {
         return false;
     }
 
-    void afiseaza_ciclu(int ciclu_curent[]) {
+    void afiseaza_ciclu(int const ciclu_curent[]) {
         for (int i = 0; i < 6; ++i) {
             cout << ciclu_curent[i] << " ";
         }
