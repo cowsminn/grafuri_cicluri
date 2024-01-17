@@ -1,166 +1,98 @@
 #include <iostream>
 
-#define k 20
+#define k 16
 
-struct subvector {
-    int v[k] = {0};
-    subvector* next = nullptr;
-};
+using namespace std;
 
-struct dynvector {
+struct graf {
+    int adiacenta[k+1][k+1];
+    int vizitat[k+1];
 
-    subvector* primul = nullptr;
-
-    void update(int poz, int x) {
-        int nrnod = poz / k;
-        int pozvector = poz % k;
-
-        if (nrnod >= 7) {
-            std::cerr << "noduri setate - 7" << std::endl;
-            exit(1);
-        }
-
-        subvector* current = primul;
-        subvector* prev = nullptr;
-
-        for (int i = 0; i < nrnod; i++) {
-            if (current == nullptr) {
-                current = new subvector();
-                if (prev != nullptr) {
-                    prev->next = current;
-                } else {
-                    primul = current;
-                }
-                current->next = nullptr;
+    graf() {
+        for (int i = 1; i <= k; ++i) {
+            for (int j = 1; j <= k; ++j) {
+                adiacenta[i][j] = 0;
             }
-            prev = current;
-            current = current->next;
-        }
-
-        /// in caz ca poz < 20 => nrnod = 0 => nu intra pe for
-
-        if (current == nullptr) {
-            current = new subvector();
-            if (prev != nullptr) {
-                prev->next = current;
-            } else {
-                primul = current;
-            }
-            current->next = nullptr;
-        }
-        current->v[pozvector] = x;
-    }
-
-    int get(int poz) {
-        int nrnod = poz / k;
-        int pozvector = poz % k;
-
-        if (nrnod >= 7) {
-            std::cerr << "noduri setate - 7" << std::endl;
-            exit(1);
-        }
-
-        subvector* current = primul;
-
-        for (int i = 0; i < nrnod; i++) {
-            if (current == nullptr) {
-                return 0;
-            }
-            current = current->next;
-        }
-
-        if (current == nullptr) {
-            return 0;
-        }
-
-        return current->v[pozvector];
-    }
-
-    dynvector operator+(const dynvector& other) const {
-        dynvector rez;
-
-        subvector* currentv = primul;
-        subvector* currentother = other.primul;
-
-        while (currentv != nullptr || currentother != nullptr) {
-            subvector suma;
-
-            if (currentv != nullptr) {
-                for (int j = 0; j < k; j++) {
-                    suma.v[j] += currentv->v[j];
-                }
-                currentv = currentv->next;
-            }
-
-            if (currentother != nullptr) {
-                for (int j = 0; j < k; j++) {
-                    suma.v[j] += currentother->v[j];
-                }
-                currentother = currentother->next;
-            }
-
-            /*
-            if (rez.primul == nullptr) {
-                rez.primul = new subvector(suma);
-            } else {
-                subvector* current = rez.primul;
-                while (current->next != nullptr) {
-                    current = current->next;
-                }
-                current->next = new subvector(suma);
-            }
-            */
-
-            rez.lipirev(suma);
-        }
-
-        return rez;
-    }
-
-
-    void lipirev(const subvector& v) {
-        subvector* nodnou = new subvector(v);
-        nodnou->next = nullptr;
-
-        if (primul == nullptr) {
-            primul = nodnou;
-        } else {
-            subvector* current = primul;
-            while (current->next != nullptr) {
-                current = current->next;
-            }
-            current->next = nodnou;
+            vizitat[i] = 0;
         }
     }
 
-    ~dynvector() {
-        subvector* current = primul;
-        while (current != nullptr) {
-            subvector* next = current->next;
-            delete current;
-            current = next;
+    void adauga_muchie(int nod_sursa, int nod_destinatie) {
+        adiacenta[nod_sursa][nod_destinatie] = 1;
+        adiacenta[nod_destinatie][nod_sursa] = 1;
+    }
+
+    void afisare() {
+        for (int i = 1; i <= k; ++i) {
+            cout << i << " : ";
+            for (int j = 1; j <= k; ++j) {
+                if (adiacenta[i][j] == 1) {
+                    cout << j << " ";
+                }
+            }
+            cout << endl;
         }
+    }
+
+    void gaseste_cicluri_6() {
+        cout << "Ciclurile de lungime 6 sunt:\n";
+        for (int nod = 1; nod <= k; ++nod) {
+            int ciclu_curent[6];
+            for (int i = 0; i < 6; ++i) {
+                ciclu_curent[i] = 0;
+            }
+            ciclu_curent[0] = nod;
+            dfs(nod, nod, 1, ciclu_curent);
+        }
+    }
+
+    void dfs(int nod_start, int nod_curent, int lungime_curenta, int ciclu_curent[]) {
+        if (lungime_curenta == 6) {
+            afiseaza_ciclu(ciclu_curent);
+            return;
+        }
+
+        for (int vecin = 1; vecin <= k; ++vecin) {
+            if (adiacenta[nod_curent][vecin] == 1 && vecin > nod_start && !exista_in_ciclu(ciclu_curent, vecin)) {
+                ciclu_curent[lungime_curenta] = vecin;
+                dfs(nod_start, vecin, lungime_curenta + 1, ciclu_curent);
+                ciclu_curent[lungime_curenta] = 0;
+            }
+        }
+    }
+
+    bool exista_in_ciclu(int ciclu_curent[], int nod) {
+        for (int i = 0; i < 6; ++i) {
+            if (ciclu_curent[i] == nod) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void afiseaza_ciclu(int ciclu_curent[]) {
+        for (int i = 0; i < 6; ++i) {
+            cout << ciclu_curent[i] << " ";
+        }
+        cout << endl;
     }
 };
 
 int main() {
-    dynvector v1, v2;
+    graf G;
 
-    v1.update(90, 15);
-    v2.update(24, 10);
-    v2.update(90,2);
+    int muchii[22][2] = {{1, 2}, {1, 5}, {2, 6}, {2, 3}, {3, 7}, {3, 4}, {4, 8},
+                         {5, 6}, {5, 9}, {6, 10}, {7, 11}, {7, 8}, {8, 12}, {9, 10},
+                         {9, 13}, {10, 14}, {11, 15}, {11, 12}, {12, 16}, {13, 14},
+                         {14, 15}, {15, 16}
+    };
 
-    ///std::cout << v1.get(200); - er
-    ///v1.update(200,200); - er
-
-    dynvector suma = v1 + v2;
-
-    for (int i = 0; i < 140; i++) {
-        std::cout << suma.get(i) << " ";
-        if ((i + 1) % 20 == 0) {
-            std::cout << std::endl;
-        }
+    for (int i = 0; i < 22; ++i) {
+        G.adauga_muchie(muchii[i][0], muchii[i][1]);
     }
+
+    G.afisare();
+    G.gaseste_cicluri_6();
 
     return 0;
 }
